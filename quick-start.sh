@@ -74,6 +74,7 @@ if [ "$VERIFIED" = false ]; then
     docker run --rm -it \
         -e APP_USER="$APP_USER" \
         -e APP_PASSWORD="$APP_PASSWORD" \
+        -e TZ=Asia/Shanghai \
         -v "$DATA_DIR":/app/data \
         --add-host "deskcdn.ctyun.cn:106.120.187.154" \
         --add-host "deskcdn.ctyun.cn.ctadns.cn:106.120.187.154" \
@@ -100,6 +101,7 @@ docker run -d \
     --name "$CONTAINER_NAME" \
     -e APP_USER="$APP_USER" \
     -e APP_PASSWORD="$APP_PASSWORD" \
+    -e TZ=Asia/Shanghai \
     -v "$DATA_DIR":/app/data \
     --add-host "deskcdn.ctyun.cn:106.120.187.154" \
     --add-host "deskcdn.ctyun.cn.ctadns.cn:106.120.187.154" \
