@@ -31,13 +31,10 @@ COPY start.sh /app/start.sh
 # 7. 修复换行符并赋予执行权限
 RUN dos2unix /app/start.sh && chmod +x /app/start.sh
 
-# 8. 配置 Cron 定时任务（追加，不覆盖）
-RUN { \
-    echo "0 3,20 * * * root /usr/bin/python3 /app/login_script.py > /proc/1/fd/1 2>&1"; \
-    echo "0 4,6 * * * root /usr/bin/python3 /app/pc_login.py > /proc/1/fd/1 2>&1"; \
-    } >> /etc/cron.d/ctyun-cron 2>/dev/null || true \
-    && chmod 0644 /etc/cron.d/ctyun-cron 2>/dev/null || true
+# 8. 配置 Cron 定时任务
+RUN echo "0 3,20 * * * /usr/bin/python3 /app/login_script.py > /proc/1/fd/1 2>&1" > /var/spool/cron/crontabs/root && \
+    echo "0 4,6 * * * /usr/bin/python3 /app/pc_login.py > /proc/1/fd/1 2>&1" >> /var/spool/cron/crontabs/root && \
+    chmod 600 /var/spool/cron/crontabs/root
 
-# 9. 不覆盖官方 ENTRYPOINT，保持 CtYun.dll 正常运行
-# 使用 CMD 运行我们的启动脚本（后台启动 cron）
-CMD ["/bin/bash", "-c", "service cron start && exec dotnet CtYun.dll"]
+# 9. CMD 运行启动脚本
+CMD ["/bin/bash", "/app/start.sh"]
