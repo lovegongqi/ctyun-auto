@@ -4,8 +4,6 @@
 
 ## 快速部署（推荐）
 
-一行命令搞定：
-
 ```bash
 git clone https://github.com/lovegongqi/ctyun-auto.git
 cd ctyun-auto/
@@ -14,19 +12,21 @@ bash quick-start.sh 手机号 密码
 
 示例：
 ```bash
-bash quick-start.sh 手机号 密码
+bash quick-start.sh 18170890791 Gq360304437.
 ```
 
-**流程**：首次验证设备（输入短信验证码）→ 自动启动后台守护容器
+**流程**：首次验证设备 → 自动构建镜像 → 启动后台守护容器
 
 ---
 
-## 部署方式对比
+## 功能列表
 
-| 方式 | 命令 | 特点 |
-|------|------|------|
-| **快速部署** | `bash quick-start.sh 手机号 密码` | 无需构建镜像，一行搞定 |
-| 交互式部署 | `bash deploy.sh` | 引导式，需要手动确认 |
+| 功能 | 说明 |
+|------|------|
+| **保活** | 24小时自动重连云电脑，防止掉线 |
+| **AI对话** | 每日3:00、20:00自动执行AI对话积分任务 |
+| **挂机任务** | 每日4:00、6:00自动执行云电脑挂机任务 |
+| **自动兑换** | 可选自动兑换积分奖励 |
 
 ---
 
@@ -40,8 +40,15 @@ docker logs -f ctyun_手机号
 docker stop ctyun_手机号
 docker start ctyun_手机号
 
-# 重新部署
-bash quick-start.sh 手机号 密码
+# 查看定时任务
+docker exec ctyun_手机号 crontab -l
+
+# 配置自动兑换
+docker exec -it ctyun_手机号 python3 /app/pc_login.py --config-redeem
+
+# 手动执行积分任务
+docker exec ctyun_手机号 python3 /app/login_script.py      # AI对话
+docker exec ctyun_手机号 python3 /app/pc_login.py          # 挂机任务
 ```
 
 ---

@@ -9,7 +9,7 @@ NC='\033[0m'
 
 usage() {
     cat << EOF
-${GREEN}天翼云电脑保活 - 快速部署${NC}
+${GREEN}天翼云电脑保活自动化 - 快速部署${NC}
 
 用法:
     $0 <账号> <密码>
@@ -17,11 +17,11 @@ ${GREEN}天翼云电脑保活 - 快速部署${NC}
 示例:
     $0 手机号 密码
 
-部署流程:
-    1. 首次运行 -it 交互模式验证设备
-    2. 输入短信验证码完成绑定
-    3. 按 Ctrl+C 退出
-    4. 脚本自动启动后台守护容器
+功能:
+    - 保活：24小时自动重连云电脑
+    - 积分任务：AI对话 + 云电脑挂机
+    - 自动兑换：可选自动兑换积分奖励
+    - 定时任务：每日自动执行
 
 常用命令:
     docker logs -f ctyun_账号      查看日志
@@ -40,17 +40,26 @@ if ! command -v docker > /dev/null 2>&1; then
     exit 1
 fi
 
+# 检查是否在项目目录
+if [ ! -f "app/entrypoint.sh" ] || [ ! -f "app/login_script.py" ] || [ ! -f "app/pc_login.py" ]; then
+    echo -e "${RED}[!] 错误: 请在项目目录运行此脚本${NC}"
+    echo -e "    git clone https://github.com/lovegongqi/ctyun-auto.git"
+    echo -e "    cd ctyun-auto"
+    exit 1
+fi
+
 APP_USER="$1"
 APP_PASSWORD="$2"
 DATA_DIR="${HOME}/data"
 CONTAINER_NAME="ctyun_${APP_USER}"
+IMAGE_NAME="ctyun-auto:v1"
 
 if [ -z "$APP_PASSWORD" ]; then
     echo -e "${RED}[!] 密码不能为空${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}=== 天翼云电脑保活快速部署 ===${NC}\n"
+echo -e "${GREEN}=== 天翼云电脑保活自动化快速部署 ===${NC}\n"
 
 # 1. 检查是否已验证过
 if [ -f "${DATA_DIR}/.devicecode_${APP_USER}" ]; then
@@ -67,7 +76,7 @@ mkdir -p "$DATA_DIR"
 # 3. 如果未验证，先验证
 if [ "$VERIFIED" = false ]; then
     echo -e "\n======================================================="
-    echo -e "${YELLOW}[1/2] 设备验证阶段${NC}"
+    echo -e "${YELLOW}[1/3] 设备验证阶段${NC}"
     echo -e "======================================================="
     echo -e "请在短信到达后输入验证码，按回车确认\n"
     
@@ -88,9 +97,16 @@ if [ "$VERIFIED" = false ]; then
     fi
 fi
 
-# 4. 启动后台守护容器
+# 4. 构建自定义镜像（包含积分任务脚本）
 echo -e "\n======================================================="
-echo -e "${YELLOW}[2/2] 启动后台守护容器${NC}"
+echo -e "${YELLOW}[2/3] 构建自定义镜像${NC}"
+echo -e "======================================================="
+
+docker build -q -t "$IMAGE_NAME" ./app
+
+# 5. 启动后台守护容器
+echo -e "\n======================================================="
+echo -e "${YELLOW}[3/3] 启动后台守护容器${NC}"
 echo -e "======================================================="
 
 # 删除旧容器（如果存在）
@@ -106,7 +122,7 @@ docker run -d \
     --add-host "deskcdn.ctyun.cn:106.120.187.154" \
     --add-host "deskcdn.ctyun.cn.ctadns.cn:106.120.187.154" \
     --restart unless-stopped \
-    su3817807/ctyun:latest dotnet CtYun.dll
+    "$IMAGE_NAME"
 
 echo -e "\n${GREEN}[*] 部署成功!${NC}\n"
 echo -e "容器名: ${CONTAINER_NAME}"
@@ -116,3 +132,10 @@ echo -e "${YELLOW}常用命令:${NC}"
 echo -e "  docker logs -f ${CONTAINER_NAME}   查看日志"
 echo -e "  docker stop ${CONTAINER_NAME}      停止"
 echo -e "  docker start ${CONTAINER_NAME}     启动"
+echo -e ""
+echo -e "${YELLOW}定时任务:${NC}"
+echo -e "  03:00、20:00  AI对话积分任务"
+echo -e "  04:00、06:00  云电脑挂机任务"
+echo -e ""
+echo -e "${YELLOW}配置自动兑换:${NC}"
+echo -e "  docker exec -it ${CONTAINER_NAME} python3 /app/pc_login.py --config-redeem"
