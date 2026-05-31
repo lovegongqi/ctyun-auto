@@ -4,8 +4,9 @@ FROM su3817807/ctyun:latest
 # 2. 切换到 root 用户以安装系统级依赖
 USER root
 
-# 3. 设置时区为亚洲/上海
+# 3. 设置时区
 ENV TZ=Asia/Shanghai
+ENV RUNNING_IN_DOCKER=true
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 4. 安装 Python3、Chromium、中文字体、Cron
